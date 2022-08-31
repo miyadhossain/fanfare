@@ -1,38 +1,36 @@
 const Video = require("../models/Video");
 
-module.exports = {
+//Resolvers
+const resolvers = {
   Query: {
-    async video(_, { ID }) {
-      return await Video.findById(ID);
+    hello: () => {
+      return "Hello World";
     },
-    async getVideos() {
+    getAllVideos: async () => {
       return await Video.find();
     },
   },
-
   Mutation: {
-    async createVideo(_, { videoInput: { title, src } }) {
-      const createdVideo = new Video({
-        title: title,
-        src: src,
-        createdAt: new Date().toISOString(),
-      });
-      const res = await createdVideo.save(); // MondoDb saving
-      // console.log(res._doc)
-      return {
-        id: res.id,
-        ...res._doc,
-      };
+    createVideo: async (parent, args, context, info) => {
+      const { title, src } = args.video;
+      const video = await new Video({ title, src }).save();
+      return video;
     },
-    async deleteVideo(_, { ID }) {
-      const wasDeleted = (await Video.deleteOne({ _id: ID })).deletedCount;
-      return wasDeleted; // 1 if something was deleted, 0 if noting was deleted
+    updateVideo: async (parent, args, context, info) => {
+      const { id } = args;
+      const { title, src } = args.video;
+      const video = await Video.findByIdAndUpdate(
+        id,
+        { title, src },
+        { new: true }
+      );
+      return video;
     },
-    async editVideo(_, { ID, videoInput: { title, src } }) {
-      const wasEdited = (
-        await Video.updateOne({ _id: ID }, { title: title, src: src })
-      ).modifiedCount;
-      return wasEdited; // 1 if something was edited, 0 if noting was edited
+    deleteVideo: async (parent, args, context, info) => {
+      const { id } = args;
+      await Video.findByIdAndDelete(id);
+      return "Deleted";
     },
   },
 };
+module.exports = resolvers;
